@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a55c0'/%3E%3C/svg%3E">
+<style>
+:root{color-scheme:light;--bg:#f5f5f3;--s:#fff;--b:#e6e5e1;--t:#1b1b1a;--t2:#52514e;--t3:#85847e;--a:#2a63d4;--good:#0b7a3b;--goodbg:#e6f5ec;--warn:#8a5300;--warnbg:#fff3d6;--bad:#b42f2f;--badbg:#fdeaea;--violet:#5b4bc4;--violetbg:#efedfb}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Arial,sans-serif;font-size:14px;line-height:1.5;color:var(--t);background:var(--bg)}
+header{background:var(--s);border-bottom:1px solid var(--b);padding:18px 24px}header h1{margin:0;font-size:19px}header p{margin:4px 0 0;color:var(--t2)}
+.wrap{max-width:1000px;margin:0 auto;padding:18px 20px 60px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.tile{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:12px 14px}.tile .v{font-size:24px;font-weight:650;font-variant-numeric:tabular-nums}.tile .l{color:var(--t2);font-size:12.5px}
+.card{background:var(--s);border:1px solid var(--b);border-radius:12px;margin-bottom:16px;overflow:hidden}
+.card h2{font-size:15px;margin:0}.head{display:flex;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--b);flex-wrap:wrap}
+.wait{border-color:#e0d9fb}.wait .head{background:var(--violetbg)}
+.chip{display:inline-block;border-radius:5px;padding:0 7px;font-size:12px;line-height:20px;background:#f0efec;color:var(--t2);font-weight:500;white-space:nowrap}
+.chip.good{background:var(--goodbg);color:var(--good)}.chip.warn{background:var(--warnbg);color:var(--warn)}.chip.bad{background:var(--badbg);color:var(--bad)}.chip.violet{background:var(--violetbg);color:var(--violet)}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;color:var(--t2);font-weight:600;padding:7px 16px;background:#fafaf8;border-bottom:1px solid var(--b)}
+td{padding:8px 16px;border-bottom:1px solid var(--b);vertical-align:top}tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.stage-row td{background:#fafaf8;font-weight:600;font-size:12.5px;color:var(--t2);padding-top:6px;padding-bottom:6px}
+.sub{color:var(--t2);font-size:12.5px}.muted{color:var(--t3)}.sp{flex:1}
+.funnel{display:flex;gap:6px;flex-wrap:wrap}
+@media (max-width:700px){.tiles{grid-template-columns:repeat(2,1fr)}}
+@media print{body{background:#fff}.card,.tile{break-inside:avoid}}
+</style></head><body>
+<script type="application/json" id="data">__PAYLOAD__</script>
+<header><h1 id="h"></h1><p id="hp"></p></header>
+<div class="wrap" id="root"></div>
+<script>
+(function(){
+'use strict';
+var D=JSON.parse(document.getElementById('data').textContent);
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+document.getElementById('h').textContent='Hiring pipeline: '+D.hm.name;
+document.getElementById('hp').textContent='Snapshot as of '+new Date(D.at).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})+' · from '+(D.recruiter.name||'your recruiter')+(D.company?' · '+D.company:'')+'. This page doesn’t update itself. Ask for a fresh one anytime.';
+var all=[];D.reqs.forEach(function(r){r.cands.forEach(function(c){c.req=r;all.push(c);});});
+var active=all.filter(function(c){return !c.closed&&c.stageId!=='hired';});
+var waiting=all.filter(function(c){return c.waiting;});
+var interviewing=active.filter(function(c){return c.stageId==='hm_interview'||c.stageId==='panel';});
+var offers=all.filter(function(c){return c.stageId==='offer'||c.stageId==='hired';});
+function cand(c,showReq){
+  return '<tr><td><b>'+esc(c.name)+'</b><div class="sub">'+esc([c.current,c.location].filter(Boolean).join(' · '))+'</div></td>'+
+    (showReq?'<td class="sub">'+esc(c.req.title||c.req.id)+'</td>':'')+
+    '<td>'+(c.rec?'<span class="chip '+(c.recCls||'')+'">Recruiter: '+esc(c.rec)+'</span> ':'')+(c.decision?'<span class="chip '+esc(c.decisionCls)+'">You: '+esc(c.decision)+'</span> ':'')+(c.waiting?'<span class="chip violet">Waiting on you</span>':'')+'</td>'+
+    '<td class="sub">'+esc(c.next||'')+'</td><td class="num sub">'+(c.closed?'':esc(c.days)+'d')+'</td></tr>';
+}
+var h='<div class="tiles"><div class="tile"><div class="v">'+active.length+'</div><div class="l">Active candidates</div></div><div class="tile"><div class="v">'+waiting.length+'</div><div class="l">Waiting on your review</div></div><div class="tile"><div class="v">'+interviewing.length+'</div><div class="l">In interviews</div></div><div class="tile"><div class="v">'+offers.length+'</div><div class="l">Offer or hired</div></div></div>';
+if(waiting.length){h+='<section class="card wait"><div class="head"><h2>Waiting on your review ('+waiting.length+')</h2><span class="sp"></span><span class="sub">Use the review file I sent you to give a decision on each.</span></div><table><thead><tr><th>Candidate</th><th>Role</th><th>Notes</th><th>Next step</th><th class="num">Waiting</th></tr></thead><tbody>'+waiting.map(function(c){return cand(c,true);}).join('')+'</tbody></table></section>';}
+D.reqs.forEach(function(r){
+  var open=r.cands.filter(function(c){return !c.closed;});
+  h+='<section class="card"><div class="head"><h2>'+esc(r.title||r.id)+'</h2><span class="chip">'+esc(r.id)+'</span><span class="sp"></span><div class="funnel">'+r.funnel.map(function(f){return '<span class="chip'+(f.n?'':' muted')+'">'+esc(f.label)+': <b>'+f.n+'</b></span>';}).join('')+'</div></div>';
+  if(!open.length){h+='<div style="padding:14px 16px" class="muted">No active candidates right now.</div>';}
+  else{h+='<table><thead><tr><th>Candidate</th><th>Notes</th><th>Next step</th><th class="num">In stage</th></tr></thead><tbody>';
+    r.stages.forEach(function(s){var list=open.filter(function(c){return c.stageId===s.id;});if(!list.length)return;h+='<tr class="stage-row"><td colspan="4">'+esc(s.label)+' ('+list.length+')</td></tr>'+list.map(function(c){return cand(c,false);}).join('');});
+    h+='</tbody></table>';}
+  if(r.closedCount)h+='<div style="padding:8px 16px;border-top:1px solid var(--b)" class="sub">'+r.closedCount+' no longer in process (rejected or withdrew).</div>';
+  h+='</section>';
+});
+if(!D.reqs.length)h+='<p class="muted">No open reqs.</p>';
+document.getElementById('root').innerHTML=h;
+})();
+</script></body></html>

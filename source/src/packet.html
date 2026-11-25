@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
+<style>
+:root{color-scheme:light;--bg:#f5f5f3;--s:#fff;--b:#e6e5e1;--b2:#d2d1cc;--t:#1b1b1a;--t2:#52514e;--t3:#85847e;--a:#2a63d4;--good:#0b7a3b;--goodbg:#e6f5ec;--warn:#8a5300;--warnbg:#fff3d6;--bad:#b42f2f;--badbg:#fdeaea}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Arial,sans-serif;font-size:14px;line-height:1.5;color:var(--t);background:var(--bg)}
+header{background:var(--s);border-bottom:1px solid var(--b);padding:18px 24px}header h1{margin:0;font-size:19px}header p{margin:4px 0 0;color:var(--t2)}
+.wrap{max-width:860px;margin:0 auto;padding:18px 20px 140px}
+.note{background:#f3f7fe;border:1px solid #cfdcf6;color:#23427f;border-radius:10px;padding:10px 14px;margin-bottom:14px;white-space:pre-wrap}
+.card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card.done{border-color:#c9d9f6}
+.top{display:flex;gap:10px;align-items:flex-start}.top h2{margin:0;font-size:16px}.sub{color:var(--t2);font-size:13px}
+.chip{display:inline-block;border-radius:5px;padding:0 7px;font-size:12px;line-height:20px;background:#f0efec;color:var(--t2);font-weight:500;margin-right:4px}
+.chip.good{background:var(--goodbg);color:var(--good)}
+dl{margin:12px 0 0;display:grid;grid-template-columns:170px 1fr;gap:6px 12px}dt{color:var(--t3);font-size:12.5px;font-weight:600}dd{margin:0;white-space:pre-wrap}
+.links{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--b2);background:var(--s);border-radius:7px;padding:6px 12px;cursor:pointer;font:inherit;color:inherit;text-decoration:none}
+.btn:hover{background:#f0efec}.btn.primary{background:var(--a);border-color:var(--a);color:#fff}.btn.primary:hover{background:#2153b8}
+.decide{margin-top:14px;border-top:1px solid var(--b);padding-top:12px}
+.seg{display:inline-flex;border:1px solid var(--b2);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-right:1px solid var(--b2);background:var(--s);padding:7px 16px;cursor:pointer;font:inherit;font-weight:600;color:var(--t2)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true].advance{background:var(--goodbg);color:var(--good)}
+.seg button[aria-pressed=true].hold{background:var(--warnbg);color:var(--warn)}
+.seg button[aria-pressed=true].decline{background:var(--badbg);color:var(--bad)}
+textarea{width:100%;margin-top:8px;border:1px solid var(--b2);border-radius:8px;padding:8px 10px;font:inherit;resize:vertical}
+footer{position:fixed;left:0;right:0;bottom:0;background:var(--s);border-top:1px solid var(--b);padding:12px 20px;box-shadow:0 -4px 16px rgba(0,0,0,.06)}
+footer .in{max-width:860px;margin:0 auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sp{flex:1}.muted{color:var(--t3)}
+#out{display:none;max-width:860px;margin:10px auto 0}#out textarea{font-family:ui-monospace,Consolas,monospace;font-size:12px;height:110px}
+#msg{font-weight:600;color:var(--good)}
+@media (max-width:640px){dl{grid-template-columns:1fr}}
+</style></head><body>
+<script type="application/json" id="data">__PAYLOAD__</script>
+<header><h1 id="h"></h1><p id="hp"></p></header>
+<div class="wrap"><div id="note"></div><div id="list"></div></div>
+<footer><div class="in"><span id="prog"></span><span class="sp"></span><span id="msg"></span><a class="btn" id="mail" href="#">Email my reply</a><button class="btn primary" id="copy">Copy my reply</button></div>
+<div id="out"><div class="muted" style="font-size:12px">If copying didn't work, select all of this text and copy it manually:</div><textarea id="outt" readonly></textarea></div></footer>
+<script>
+(function(){
+'use strict';
+var D=JSON.parse(document.getElementById('data').textContent);
+var KEY='tdpacket_'+D.id, st={};
+try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var L={advance:'Advance',hold:'Hold',decline:'Decline'};
+var first=(D.hm.name||'').split(' ')[0];
+document.getElementById('h').textContent='Candidate review for '+D.hm.name;
+document.getElementById('hp').textContent=(D.candidates.length===1?'1 candidate':D.candidates.length+' candidates')+' from '+(D.recruiter.name||'your recruiter')+(D.company?' · '+D.company:'')+' · sent '+new Date(D.at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+if(D.note){var n=document.getElementById('note');n.className='note';n.textContent=D.note;}
+var blobs={};
+function blobUrl(c){if(blobs[c.id])return blobs[c.id];var p=c.resume.data.split(',');var bin=atob(p[1]);var u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return blobs[c.id]=URL.createObjectURL(new Blob([u],{type:c.resume.type||'application/pdf'}));}
+function render(){
+  document.getElementById('list').innerHTML=D.candidates.map(function(c){
+    var s=st[c.id]||{};var cur=[c.currentTitle,c.currentCompany].filter(Boolean).join(' @ ');
+    return '<section class="card'+(s.v?' done':'')+'" aria-label="'+esc(c.name)+'"><div class="top"><div style="flex:1"><h2>'+esc(c.name)+'</h2><div class="sub">'+esc([cur,c.location].filter(Boolean).join(' · '))+'</div><div class="sub">For: '+esc(c.jobTitle||'')+' ('+esc(c.reqId)+')'+(c.source?' · Source: '+esc(c.source):'')+'</div></div>'+
+      (c.rec&&c.rec.label?'<span class="chip good">Recruiter: '+esc(c.rec.label)+(c.rec.rating?' · '+esc(c.rec.rating)+'/4':'')+'</span>':'')+'</div>'+
+      (c.rec&&c.rec.fields.length?'<dl>'+c.rec.fields.map(function(f){return '<dt>'+esc(f[0])+'</dt><dd>'+esc(f[1])+'</dd>';}).join('')+'</dl>':'<p class="muted">No recruiter notes yet.</p>')+
+      '<div class="links">'+(c.resume?'<a class="btn" data-res="'+esc(c.id)+'" href="#">📄 Open resume</a>':'')+(c.workdayUrl?'<a class="btn" href="'+esc(c.workdayUrl)+'" target="_blank" rel="noopener">Open in Workday</a>':'')+'</div>'+
+      '<div class="decide"><div class="seg" role="group" aria-label="Decision for '+esc(c.name)+'">'+['advance','hold','decline'].map(function(v){return '<button type="button" class="'+v+'" data-c="'+esc(c.id)+'" data-v="'+v+'" aria-pressed="'+(s.v===v)+'">'+L[v]+'</button>';}).join('')+'</div>'+
+      '<textarea rows="2" data-cm="'+esc(c.id)+'" placeholder="Comment for the recruiter (optional). What stood out, what to probe, or why not.">'+esc(s.m||'')+'</textarea></div></section>';
+  }).join('');
+  prog();
+}
+function prog(){var n=D.candidates.filter(function(c){return st[c.id]&&st[c.id].v;}).length;document.getElementById('prog').innerHTML='<b>'+n+' of '+D.candidates.length+'</b> reviewed';}
+function b64(s){var b=new TextEncoder().encode(s),bin='';for(var i=0;i<b.length;i+=32768)bin+=String.fromCharCode.apply(null,b.subarray(i,i+32768));return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function reply(){
+  var done=D.candidates.filter(function(c){return st[c.id]&&st[c.id].v;});
+  var lines=['Review decisions from '+D.hm.name+':'];
+  done.forEach(function(c){var s=st[c.id];lines.push('• '+c.name+' ('+c.reqId+'): '+L[s.v].toUpperCase()+(s.m?' — '+s.m.replace(/\s*\n\s*/g,' '):''));});
+  var code='TDR1.'+b64(JSON.stringify({p:D.id,h:D.hm.id,n:D.hm.name,at:new Date().toISOString(),d:done.map(function(c){return[c.id,st[c.id].v,st[c.id].m||''];})}));
+  lines.push('','Reply code for '+(D.recruiter.name||'the recruiter')+': '+code);
+  return {text:lines.join('\n'),n:done.length};
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-v]');if(b){var id=b.getAttribute('data-c');st[id]=st[id]||{};st[id].v=st[id].v===b.getAttribute('data-v')?'':b.getAttribute('data-v');persist();render();return;}
+  var r=e.target.closest('[data-res]');if(r){e.preventDefault();var c=D.candidates.filter(function(x){return x.id===r.getAttribute('data-res');})[0];window.open(blobUrl(c),'_blank');}
+});
+document.addEventListener('input',function(e){var id=e.target.getAttribute('data-cm');if(id){st[id]=st[id]||{};st[id].m=e.target.value;persist();}});
+document.getElementById('copy').addEventListener('click',function(){
+  var r=reply();if(!r.n){document.getElementById('msg').textContent='Choose Advance, Hold or Decline for at least one candidate first.';document.getElementById('msg').style.color='#b42f2f';return;}
+  var o=document.getElementById('out'),t=document.getElementById('outt');t.value=r.text;o.style.display='block';
+  var ok=function(){var m=document.getElementById('msg');m.style.color='';m.textContent='Copied! Paste it back to '+(D.recruiter.name||'your recruiter').split(' ')[0]+' in Teams.';};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(r.text).then(ok,function(){t.select();try{document.execCommand('copy');ok();}catch(e){}});}else{t.select();try{document.execCommand('copy');ok();}catch(e){}}
+});
+document.getElementById('mail').addEventListener('click',function(e){e.preventDefault();var r=reply();if(!r.n){document.getElementById('copy').click();return;}
+  location.href='mailto:'+encodeURIComponent(D.recruiter.email||'').replace(/%40/g,'@')+'?subject='+encodeURIComponent('Candidate review decisions – '+D.hm.name)+'&body='+encodeURIComponent(r.text.replace(/\n/g,'\r\n'));});
+if(!D.recruiter.email)document.getElementById('mail').style.display='none';
+render();
+})();
+</script></body></html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TalentDesk – Recruiting workbench</title>
+<meta name="theme-color" content="#1d1e22">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234f7fe6'/%3E%3Cstop offset='1' stop-color='%232a55c0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Segoe UI,Arial' font-size='26' font-weight='700' fill='white' text-anchor='middle'%3ETD%3C/text%3E%3C/svg%3E">
+<style>/*CSS*/</style>
+</head>
+<body>
+<div id="app">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand"><div class="brand-mark">TD</div>TalentDesk</div>
+    <nav id="nav"></nav>
+    <div class="side-foot">
+      <button class="backup" id="backup-btn" data-act="backup" title="Download a backup of all your data"></button>
+      <div id="storage-note"></div>
+      <div>Runs offline · no data leaves this computer</div>
+    </div>
+  </aside>
+  <main>
+    <div id="banner"></div>
+    <header class="topbar"><h1 id="view-title"></h1><span class="spacer"></span><div class="row" id="view-actions"></div></header>
+    <div id="view"></div>
+  </main>
+</div>
+<div id="gate-root"></div>
+<div id="drawer-root"></div>
+<div id="bulk-root"></div>
+<div id="modal-root"></div>
+<div id="toast" aria-live="polite"></div>
+<div id="tip" class="hidden" role="tooltip"></div>
+<script>/*JS*/</script>
+</body>
+</html>
